@@ -1,0 +1,227 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        -40
+      ],
+      "id": "f154a02e-c51e-449a-a661-72e0c647e4d1",
+      "name": "Schedule Trigger",
+      "notesInFlow": true,
+      "notes": "Shows Doge Coin price everyday at 7:00 am!"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\nconst todayPrice = data.Price;\nconst yesterdayPrice = data.PriceYesterday;\n\n\n\nconst diff = todayPrice - yesterdayPrice;\nconst percent = (diff / yesterdayPrice) * 100;\nconst trend = diff > 0 ? \"افزایش\" : diff < 0 ? \"کاهش\" : \"بدون تغییر\";\n\nreturn {\n  \n    todayPrice,\n    yesterdayPrice,\n    trend,\n    percentageChange: percent.toFixed(2),\n    message: `قیمت دوج کوین امروز ${trend} داشته و به ${todayPrice.toFixed(4)} رسیده (${Math.abs(percent).toFixed(2)}%)`\n  \n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        -40
+      ],
+      "id": "ec447794-4b9a-480a-a1f6-6ff6d1082f20",
+      "name": "Calculate the price"
+    },
+    {
+      "parameters": {
+        "url": "https://api.diadata.org/v1/assetQuotation/Dogechain/0x0000000000000000000000000000000000000000",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -160,
+        -40
+      ],
+      "id": "ab302f96-5b27-4928-9a86-8404e9f2ff3b",
+      "name": "Getting current price",
+      "retryOnFail": false,
+      "notesInFlow": false,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot7530873689:AAFDy3SDq2sCTkJrXDvLdSdAnhx8PYVAcY8/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\":67322854,\n  \"text\": \"={{$json['message']}}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        280,
+        -40
+      ],
+      "id": "56c127d5-d3a1-4598-a5cd-c5df0c28cbce",
+      "name": "Send Tel Message"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "currency_price2",
+          "mode": "list",
+          "cachedResultName": "currency_price2"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "price": "={{ $json.result.text }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "price",
+              "displayName": "price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        500,
+        -40
+      ],
+      "id": "8c29f6c4-4dad-4f92-a2b0-8baf1200350b",
+      "name": "Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "bqkoqUxbrNymo3Te",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -40
+      ],
+      "id": "8b357f96-a782-4497-805a-401131e00202",
+      "name": "No Operation, do nothing",
+      "notesInFlow": true,
+      "notes": "Workflow Completed!"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Getting current price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate the price": {
+      "main": [
+        [
+          {
+            "node": "Send Tel Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Getting current price": {
+      "main": [
+        [
+          {
+            "node": "Calculate the price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Tel Message": {
+      "main": [
+        [
+          {
+            "node": "Postgres",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "192bbdad-3263-4e90-81d5-055bcf821841",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8eefdd3b24e2a2ef2e3ecce40723f4f9958220f48696212ab6890e07ab613502"
+  },
+  "id": "2NNgSyPhcCR8thdk",
+  "tags": []
+}
