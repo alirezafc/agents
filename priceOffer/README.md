@@ -1,6 +1,3 @@
-حتماً! در ادامه یک متن مناسب برای فایل `README.md` پروژه‌ی n8n Agent شما آماده کردم:
-
----
 
 ````markdown
 # 🧠 n8n Product Scraper Agent
